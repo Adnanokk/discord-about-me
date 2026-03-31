@@ -70,7 +70,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const body = document.getElementById('body-bg');
     if (body) {
-      body.style.backgroundColor = theme === 'gray' ? '#09090b' : '#f5f5f0';
+      body.style.backgroundColor = theme === 'gray' ? '#09090b' : '#ffffff';
     }
   }, [theme]);
 
