@@ -207,11 +207,18 @@ const App: React.FC = () => {
         </div>
       </Window>
 
-      {/* Footer — long-press "Adnan" to open admin panel */}
+      {/* Footer — long-press to open admin panel (works on mobile + desktop) */}
       <div
         id="admin-trigger"
-        className={`absolute bottom-6 left-1/2 -translate-x-1/2 text-[9px] mono uppercase tracking-[0.5em] hidden md:block opacity-30 transition-colors duration-700 select-none ${isGray ? 'text-zinc-500' : 'text-stone-400'}`}
-        style={{ cursor: 'default', userSelect: 'none', WebkitUserSelect: 'none' }}
+        className={`absolute bottom-6 left-1/2 -translate-x-1/2 text-[9px] mono uppercase tracking-[0.5em] opacity-30 transition-colors duration-700 select-none ${isGray ? 'text-zinc-500' : 'text-stone-400'}`}
+        style={{
+          cursor: 'default',
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          // Larger touch area without changing visible size
+          padding: '12px 20px',
+          margin: '-12px -20px',
+        }}
       >
         Adnan • @adnan_ok • 2024
       </div>

@@ -127,29 +127,35 @@ const AuthGate: React.FC<Props> = ({ children, onAuthenticated }) => {
               value={password}
               onChange={e => { setPassword(e.target.value); setError(''); }}
               placeholder="access password"
-              autoComplete="new-password"
+              autoComplete="current-password"
               spellCheck={false}
               disabled={loading}
               style={{
                 width: '100%', boxSizing: 'border-box',
                 background: 'rgba(255,255,255,0.04)',
                 border: `1px solid ${error ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.09)'}`,
-                borderRadius: 8, padding: '11px 12px',
-                color: 'rgba(255,255,255,0.85)', fontFamily: 'JetBrains Mono, monospace', fontSize: 14,
-                outline: 'none', marginBottom: error ? 8 : 14,
+                borderRadius: 10, padding: '14px 14px',
+                color: 'rgba(255,255,255,0.85)', fontFamily: 'JetBrains Mono, monospace',
+                // 16px prevents iOS Safari from zooming
+                fontSize: 16,
+                outline: 'none', marginBottom: error ? 10 : 14,
+                WebkitAppearance: 'none',
               }}
             />
-            {error && <p style={{ fontSize: 11, color: 'rgba(239,68,68,0.85)', marginBottom: 12, lineHeight: 1.4 }}>{error}</p>}
+            {error && <p style={{ fontSize: 13, color: 'rgba(239,68,68,0.85)', marginBottom: 14, lineHeight: 1.4 }}>{error}</p>}
             <button
               type="submit"
               disabled={loading || !password.trim()}
               style={{
-                width: '100%', padding: '11px',
+                width: '100%',
+                // 48px min height — comfortable touch target
+                minHeight: 48,
                 background: loading || !password.trim() ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.09)',
-                border: '1px solid rgba(255,255,255,0.09)', borderRadius: 8,
+                border: '1px solid rgba(255,255,255,0.09)', borderRadius: 10,
                 color: loading || !password.trim() ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.8)',
-                fontFamily: 'JetBrains Mono, monospace', fontSize: 11, letterSpacing: '0.2em',
+                fontFamily: 'JetBrains Mono, monospace', fontSize: 13, letterSpacing: '0.2em',
                 cursor: loading || !password.trim() ? 'not-allowed' : 'pointer',
+                WebkitAppearance: 'none',
               }}
             >
               {loading ? 'VERIFYING...' : 'ENTER'}
