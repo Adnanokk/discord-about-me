@@ -100,8 +100,6 @@ const AuthGate: React.FC<Props> = ({ children, onAuthenticated }) => {
               width: 64, height: 64, borderRadius: 16,
               border: '1px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.03)', marginBottom: 16,
               cursor: 'default', userSelect: 'none', WebkitUserSelect: 'none',
-              // Extra invisible padding for easier touch
-              padding: 16, margin: -16, boxSizing: 'content-box',
             }}
           >
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">

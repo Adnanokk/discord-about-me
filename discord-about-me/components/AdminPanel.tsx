@@ -35,55 +35,28 @@ const AdminPanel: React.FC<Props> = ({ onAuthenticated }) => {
     }
   }, [open]);
 
-  // Long-press trigger (700ms) on the lock icon or footer
+  // Trigger: tap the lock icon (or footer) 5 times within 2 seconds
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    let startX = 0;
-    let startY = 0;
+    let tapCount = 0;
+    let resetTimer: ReturnType<typeof setTimeout> | null = null;
 
-    const isOnTrigger = (e: MouseEvent | TouchEvent) => {
+    const onTap = (e: MouseEvent | TouchEvent) => {
       const target = e.target as HTMLElement;
-      return !!(target?.closest('#admin-trigger') || target?.closest('#admin-trigger-footer'));
-    };
+      if (!target?.closest('#admin-trigger') && !target?.closest('#admin-trigger-footer')) return;
 
-    const onMouseDown = (e: MouseEvent) => {
-      if (!isOnTrigger(e)) return;
-      timer = setTimeout(() => setOpen(true), 700);
-    };
-    const onMouseUp = () => { if (timer) { clearTimeout(timer); timer = null; } };
+      tapCount++;
+      if (resetTimer) clearTimeout(resetTimer);
+      resetTimer = setTimeout(() => { tapCount = 0; }, 2000);
 
-    const onTouchStart = (e: TouchEvent) => {
-      if (!isOnTrigger(e)) return;
-      startX = e.touches[0].clientX;
-      startY = e.touches[0].clientY;
-      timer = setTimeout(() => setOpen(true), 700);
-    };
-    const onTouchMove = (e: TouchEvent) => {
-      if (!timer) return;
-      // Only cancel if finger moved more than 12px — ignore micro-movements
-      const dx = e.touches[0].clientX - startX;
-      const dy = e.touches[0].clientY - startY;
-      if (Math.sqrt(dx * dx + dy * dy) > 12) {
-        clearTimeout(timer);
-        timer = null;
+      if (tapCount >= 5) {
+        tapCount = 0;
+        if (resetTimer) clearTimeout(resetTimer);
+        setOpen(true);
       }
     };
-    const onTouchEnd = () => { if (timer) { clearTimeout(timer); timer = null; } };
 
-    document.addEventListener('mousedown', onMouseDown);
-    document.addEventListener('mouseup', onMouseUp);
-    // NOTE: no mousemove cancel — it fires on touch devices and kills the timer
-    document.addEventListener('touchstart', onTouchStart, { passive: true });
-    document.addEventListener('touchmove', onTouchMove, { passive: true });
-    document.addEventListener('touchend', onTouchEnd);
-
-    return () => {
-      document.removeEventListener('mousedown', onMouseDown);
-      document.removeEventListener('mouseup', onMouseUp);
-      document.removeEventListener('touchstart', onTouchStart);
-      document.removeEventListener('touchmove', onTouchMove);
-      document.removeEventListener('touchend', onTouchEnd);
-    };
+    document.addEventListener('click', onTap);
+    return () => document.removeEventListener('click', onTap);
   }, []);
 
   const close = useCallback(() => {
