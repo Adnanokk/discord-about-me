@@ -42,7 +42,7 @@ const AdminPanel: React.FC<Props> = ({ onAuthenticated }) => {
 
     const start = (e: MouseEvent | TouchEvent) => {
       const target = e.target as HTMLElement;
-      if (target?.closest('#admin-trigger')) {
+      if (target?.closest('#admin-trigger') || target?.closest('#admin-trigger-footer')) {
         touchMoved = false;
         timer = setTimeout(() => setOpen(true), 600);
       }

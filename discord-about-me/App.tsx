@@ -186,46 +186,43 @@ const App: React.FC = () => {
   };
 
   const [authenticated, setAuthenticated] = useState(false);
+  const handleAuthenticated = () => setAuthenticated(true);
 
   return (
-    <AuthGate onAuthenticated={() => setAuthenticated(true)}>
-    <div className="min-h-screen w-full flex items-center justify-center p-4 md:p-8 relative overflow-hidden">
-      <RainBackground theme={theme} />
+    <>
+      {/* AdminPanel lives OUTSIDE AuthGate so it's reachable from the lock screen */}
+      <AdminPanel onAuthenticated={handleAuthenticated} />
 
-      <Window
-        title="profile.vsc"
-        theme={theme}
-        language={language}
-        onThemeToggle={toggleTheme}
-        onLanguageToggle={handleLanguageToggle}
-        onNavigate={handleNavigate}
-      >
-        <div className={`transition-opacity duration-300 ${animating ? 'opacity-0' : 'opacity-100'}`}>
-          <div className="max-w-3xl mx-auto py-10">
-            {renderContent()}
+      <AuthGate onAuthenticated={handleAuthenticated}>
+        <div className="min-h-screen w-full flex items-center justify-center p-4 md:p-8 relative overflow-hidden">
+          <RainBackground theme={theme} />
+
+          <Window
+            title="profile.vsc"
+            theme={theme}
+            language={language}
+            onThemeToggle={toggleTheme}
+            onLanguageToggle={handleLanguageToggle}
+            onNavigate={handleNavigate}
+          >
+            <div className={`transition-opacity duration-300 ${animating ? 'opacity-0' : 'opacity-100'}`}>
+              <div className="max-w-3xl mx-auto py-10">
+                {renderContent()}
+              </div>
+            </div>
+          </Window>
+
+          {/* Footer — also works as a long-press trigger when logged in */}
+          <div
+            id="admin-trigger-footer"
+            className={`absolute bottom-6 left-1/2 -translate-x-1/2 text-[9px] mono uppercase tracking-[0.5em] opacity-30 transition-colors duration-700 select-none ${isGray ? 'text-zinc-500' : 'text-stone-400'}`}
+            style={{ cursor: 'default', userSelect: 'none', WebkitUserSelect: 'none', padding: '12px 20px', margin: '-12px -20px' }}
+          >
+            Adnan • @adnan_ok • 2024
           </div>
         </div>
-      </Window>
-
-      {/* Footer — long-press to open admin panel (works on mobile + desktop) */}
-      <div
-        id="admin-trigger"
-        className={`absolute bottom-6 left-1/2 -translate-x-1/2 text-[9px] mono uppercase tracking-[0.5em] opacity-30 transition-colors duration-700 select-none ${isGray ? 'text-zinc-500' : 'text-stone-400'}`}
-        style={{
-          cursor: 'default',
-          userSelect: 'none',
-          WebkitUserSelect: 'none',
-          // Larger touch area without changing visible size
-          padding: '12px 20px',
-          margin: '-12px -20px',
-        }}
-      >
-        Adnan • @adnan_ok • 2024
-      </div>
-
-      <AdminPanel onAuthenticated={() => setAuthenticated(true)} />
-    </div>
-    </AuthGate>
+      </AuthGate>
+    </>
   );
 };
 

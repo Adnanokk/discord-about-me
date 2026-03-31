@@ -91,14 +91,20 @@ const AuthGate: React.FC<Props> = ({ children, onAuthenticated }) => {
       }} />
 
       <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: 360, padding: '0 20px', boxSizing: 'border-box' }}>
-        {/* Lock icon */}
+        {/* Lock icon — long-press (0.6s) to open admin panel */}
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            width: 48, height: 48, borderRadius: 12,
-            border: '1px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.03)', marginBottom: 16,
-          }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <div
+            id="admin-trigger"
+            style={{
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              width: 64, height: 64, borderRadius: 16,
+              border: '1px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.03)', marginBottom: 16,
+              cursor: 'default', userSelect: 'none', WebkitUserSelect: 'none',
+              // Extra invisible padding for easier touch
+              padding: 16, margin: -16, boxSizing: 'content-box',
+            }}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
             </svg>
           </div>
