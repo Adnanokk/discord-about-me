@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 
+const AUTH_TOKEN_KEY = 'portfolio_auth_token';
+
 interface Props {
   children: React.ReactNode;
+  onAuthenticated?: () => void;
 }
 
 type State = 'checking' | 'unauthenticated' | 'authenticated';
 
-const AuthGate: React.FC<Props> = ({ children }) => {
+const AuthGate: React.FC<Props> = ({ children, onAuthenticated }) => {
   const [state, setState] = useState<State>('checking');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -14,45 +17,44 @@ const AuthGate: React.FC<Props> = ({ children }) => {
   const [shake, setShake] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Check existing session on mount
   useEffect(() => {
-    fetch('/api/auth/check', { credentials: 'include' })
+    const token = localStorage.getItem(AUTH_TOKEN_KEY);
+    if (!token) { setState('unauthenticated'); return; }
+    fetch('/api/auth/check', { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
-      .then(data => setState(data.authenticated ? 'authenticated' : 'unauthenticated'))
+      .then(d => setState(d.authenticated ? 'authenticated' : 'unauthenticated'))
       .catch(() => setState('unauthenticated'));
   }, []);
 
-  // Focus input when gate appears
   useEffect(() => {
-    if (state === 'unauthenticated') {
-      setTimeout(() => inputRef.current?.focus(), 100);
-    }
+    if (state === 'unauthenticated') setTimeout(() => inputRef.current?.focus(), 100);
   }, [state]);
 
-  const triggerShake = () => {
-    setShake(true);
-    setTimeout(() => setShake(false), 500);
-  };
+  // Expose a way for AdminPanel to trigger authentication
+  useEffect(() => {
+    const handler = () => setState('authenticated');
+    window.addEventListener('portfolio:authenticated', handler);
+    return () => window.removeEventListener('portfolio:authenticated', handler);
+  }, []);
+
+  const triggerShake = () => { setShake(true); setTimeout(() => setShake(false), 500); };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!password.trim() || loading) return;
-
     setLoading(true);
     setError('');
-
     try {
       const res = await fetch('/api/auth/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ password }),
       });
-
       const data = await res.json();
-
       if (res.ok && data.success) {
+        localStorage.setItem(AUTH_TOKEN_KEY, data.token);
         setState('authenticated');
+        onAuthenticated?.();
       } else {
         setError(data.error ?? 'Invalid password.');
         setPassword('');
@@ -60,7 +62,7 @@ const AuthGate: React.FC<Props> = ({ children }) => {
         inputRef.current?.focus();
       }
     } catch {
-      setError('Connection error. Is the auth server running?');
+      setError('Connection error. Please try again.');
       triggerShake();
     } finally {
       setLoading(false);
@@ -69,92 +71,53 @@ const AuthGate: React.FC<Props> = ({ children }) => {
 
   if (state === 'checking') {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center" style={{ background: '#09090b' }}>
-        <div style={{ color: '#52525b', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', letterSpacing: '0.3em' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#09090b' }}>
+        <span style={{ color: '#3f3f46', fontFamily: 'JetBrains Mono, monospace', fontSize: 11, letterSpacing: '0.3em' }}>
           VERIFYING SESSION...
-        </div>
+        </span>
       </div>
     );
   }
 
-  if (state === 'authenticated') {
-    return <>{children}</>;
-  }
+  if (state === 'authenticated') return <>{children}</>;
 
-  // Unauthenticated — show OTP gate
   return (
-    <div
-      className="min-h-screen w-full flex items-center justify-center"
-      style={{ background: '#09090b' }}
-    >
-      {/* Subtle grid background */}
-      <div
-        style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.03) 1px, transparent 0)',
-          backgroundSize: '32px 32px',
-          pointerEvents: 'none',
-        }}
-      />
+    <div style={{ minHeight: '100vh', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#09090b' }}>
+      {/* Subtle dot-grid background */}
+      <div style={{
+        position: 'fixed', inset: 0, pointerEvents: 'none',
+        backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.03) 1px, transparent 0)',
+        backgroundSize: '32px 32px',
+      }} />
 
-      <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '360px', padding: '0 16px' }}>
+      <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: 360, padding: '0 20px', boxSizing: 'border-box' }}>
         {/* Lock icon */}
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
           <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '48px',
-            height: '48px',
-            borderRadius: '12px',
-            border: '1px solid rgba(255,255,255,0.08)',
-            background: 'rgba(255,255,255,0.03)',
-            marginBottom: '20px',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            width: 48, height: 48, borderRadius: 12,
+            border: '1px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.03)', marginBottom: 16,
           }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
             </svg>
           </div>
-          <div style={{
-            fontFamily: 'JetBrains Mono, monospace',
-            fontSize: '10px',
-            letterSpacing: '0.4em',
-            color: 'rgba(255,255,255,0.25)',
-            textTransform: 'uppercase',
-          }}>
+          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.4em', color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase' }}>
             PRIVATE
           </div>
         </div>
 
         {/* Card */}
-        <div
-          style={{
-            background: '#111113',
-            border: '1px solid rgba(255,255,255,0.07)',
-            borderRadius: '16px',
-            padding: '28px 24px',
-            animation: shake ? 'shake 0.5s cubic-bezier(0.36,0.07,0.19,0.97)' : 'none',
-          }}
-        >
-          <h1 style={{
-            fontFamily: 'Inter, sans-serif',
-            fontSize: '15px',
-            fontWeight: 500,
-            color: 'rgba(255,255,255,0.85)',
-            marginBottom: '6px',
-          }}>
+        <div style={{
+          background: '#111113', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: '28px 22px',
+          animation: shake ? 'shake 0.5s cubic-bezier(0.36,0.07,0.19,0.97)' : 'none',
+          fontFamily: 'Inter, sans-serif',
+        }}>
+          <h1 style={{ fontSize: 15, fontWeight: 500, color: 'rgba(255,255,255,0.85)', marginBottom: 6 }}>
             Enter access password
           </h1>
-          <p style={{
-            fontFamily: 'Inter, sans-serif',
-            fontSize: '12px',
-            color: 'rgba(255,255,255,0.3)',
-            marginBottom: '20px',
-            lineHeight: '1.5',
-          }}>
-            This site is protected. Use the one-time password generated by the server.
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginBottom: 20, lineHeight: 1.5 }}>
+            This site is private. Use one of your generated passwords to enter.
           </p>
 
           <form onSubmit={handleSubmit} autoComplete="off">
@@ -163,60 +126,30 @@ const AuthGate: React.FC<Props> = ({ children }) => {
               type="password"
               value={password}
               onChange={e => { setPassword(e.target.value); setError(''); }}
-              placeholder="one-time password"
-              autoComplete="off"
+              placeholder="access password"
+              autoComplete="new-password"
               spellCheck={false}
               disabled={loading}
               style={{
-                width: '100%',
-                boxSizing: 'border-box',
+                width: '100%', boxSizing: 'border-box',
                 background: 'rgba(255,255,255,0.04)',
-                border: error ? '1px solid rgba(239,68,68,0.5)' : '1px solid rgba(255,255,255,0.09)',
-                borderRadius: '8px',
-                padding: '10px 12px',
-                color: 'rgba(255,255,255,0.85)',
-                fontFamily: 'JetBrains Mono, monospace',
-                fontSize: '13px',
-                letterSpacing: '0.1em',
-                outline: 'none',
-                transition: 'border-color 0.2s',
-                marginBottom: error ? '8px' : '16px',
-              }}
-              onFocus={e => {
-                if (!error) e.target.style.borderColor = 'rgba(255,255,255,0.2)';
-              }}
-              onBlur={e => {
-                if (!error) e.target.style.borderColor = 'rgba(255,255,255,0.09)';
+                border: `1px solid ${error ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.09)'}`,
+                borderRadius: 8, padding: '11px 12px',
+                color: 'rgba(255,255,255,0.85)', fontFamily: 'JetBrains Mono, monospace', fontSize: 14,
+                outline: 'none', marginBottom: error ? 8 : 14,
               }}
             />
-
-            {error && (
-              <p style={{
-                fontFamily: 'Inter, sans-serif',
-                fontSize: '11px',
-                color: 'rgba(239,68,68,0.9)',
-                marginBottom: '14px',
-                lineHeight: '1.4',
-              }}>
-                {error}
-              </p>
-            )}
-
+            {error && <p style={{ fontSize: 11, color: 'rgba(239,68,68,0.85)', marginBottom: 12, lineHeight: 1.4 }}>{error}</p>}
             <button
               type="submit"
               disabled={loading || !password.trim()}
               style={{
-                width: '100%',
-                padding: '10px',
-                background: loading || !password.trim() ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.1)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '8px',
-                color: loading || !password.trim() ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.8)',
-                fontFamily: 'JetBrains Mono, monospace',
-                fontSize: '11px',
-                letterSpacing: '0.2em',
+                width: '100%', padding: '11px',
+                background: loading || !password.trim() ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.09)',
+                border: '1px solid rgba(255,255,255,0.09)', borderRadius: 8,
+                color: loading || !password.trim() ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.8)',
+                fontFamily: 'JetBrains Mono, monospace', fontSize: 11, letterSpacing: '0.2em',
                 cursor: loading || !password.trim() ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s',
               }}
             >
               {loading ? 'VERIFYING...' : 'ENTER'}
@@ -225,13 +158,9 @@ const AuthGate: React.FC<Props> = ({ children }) => {
         </div>
 
         <p style={{
-          textAlign: 'center',
-          marginTop: '20px',
-          fontFamily: 'JetBrains Mono, monospace',
-          fontSize: '9px',
-          letterSpacing: '0.3em',
-          color: 'rgba(255,255,255,0.1)',
-          textTransform: 'uppercase',
+          textAlign: 'center', marginTop: 18,
+          fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: '0.3em',
+          color: 'rgba(255,255,255,0.08)', textTransform: 'uppercase',
         }}>
           Max 5 attempts · Resets after 15 min
         </p>
@@ -239,10 +168,10 @@ const AuthGate: React.FC<Props> = ({ children }) => {
 
       <style>{`
         @keyframes shake {
-          10%, 90% { transform: translateX(-2px); }
-          20%, 80% { transform: translateX(4px); }
-          30%, 50%, 70% { transform: translateX(-6px); }
-          40%, 60% { transform: translateX(6px); }
+          10%,90%{transform:translateX(-2px)}
+          20%,80%{transform:translateX(4px)}
+          30%,50%,70%{transform:translateX(-6px)}
+          40%,60%{transform:translateX(6px)}
         }
       `}</style>
     </div>

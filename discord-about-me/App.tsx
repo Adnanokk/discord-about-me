@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import RainBackground from './components/RainBackground';
 import Window from './components/Window';
 import AuthGate from './components/AuthGate';
+import AdminPanel from './components/AdminPanel';
 
 type View = 'home' | 'age' | 'location' | 'usernames';
 type Lang = 'en' | 'de';
@@ -184,14 +185,16 @@ const App: React.FC = () => {
     }
   };
 
+  const [authenticated, setAuthenticated] = useState(false);
+
   return (
-    <AuthGate>
+    <AuthGate onAuthenticated={() => setAuthenticated(true)}>
     <div className="min-h-screen w-full flex items-center justify-center p-4 md:p-8 relative overflow-hidden">
       <RainBackground theme={theme} />
 
-      <Window 
-        title="profile.vsc" 
-        theme={theme} 
+      <Window
+        title="profile.vsc"
+        theme={theme}
         language={language}
         onThemeToggle={toggleTheme}
         onLanguageToggle={handleLanguageToggle}
@@ -204,10 +207,16 @@ const App: React.FC = () => {
         </div>
       </Window>
 
-      {/* Footer Info */}
-      <div className={`absolute bottom-6 left-1/2 -translate-x-1/2 text-[9px] mono uppercase tracking-[0.5em] hidden md:block opacity-30 transition-colors duration-700 ${isGray ? 'text-zinc-500' : 'text-stone-400'}`}>
+      {/* Footer — long-press "Adnan" to open admin panel */}
+      <div
+        id="admin-trigger"
+        className={`absolute bottom-6 left-1/2 -translate-x-1/2 text-[9px] mono uppercase tracking-[0.5em] hidden md:block opacity-30 transition-colors duration-700 select-none ${isGray ? 'text-zinc-500' : 'text-stone-400'}`}
+        style={{ cursor: 'default', userSelect: 'none', WebkitUserSelect: 'none' }}
+      >
         Adnan • @adnan_ok • 2024
       </div>
+
+      <AdminPanel onAuthenticated={() => setAuthenticated(true)} />
     </div>
     </AuthGate>
   );

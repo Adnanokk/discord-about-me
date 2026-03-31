@@ -1,0 +1,8 @@
+name = "portfolio"
+pages_build_output_dir = "dist"
+
+# KV namespace binding — replace YOUR_KV_NAMESPACE_ID with your actual ID
+# Get it from: Cloudflare Dashboard → Workers & Pages → KV → your namespace → ID
+[[kv_namespaces]]
+binding = "OTP_STORE"
+id = "YOUR_KV_NAMESPACE_ID"
