@@ -1,0 +1,252 @@
+import React, { useState, useEffect, useRef } from 'react';
+
+interface Props {
+  children: React.ReactNode;
+}
+
+type State = 'checking' | 'unauthenticated' | 'authenticated';
+
+const AuthGate: React.FC<Props> = ({ children }) => {
+  const [state, setState] = useState<State>('checking');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [shake, setShake] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Check existing session on mount
+  useEffect(() => {
+    fetch('/api/auth/check', { credentials: 'include' })
+      .then(r => r.json())
+      .then(data => setState(data.authenticated ? 'authenticated' : 'unauthenticated'))
+      .catch(() => setState('unauthenticated'));
+  }, []);
+
+  // Focus input when gate appears
+  useEffect(() => {
+    if (state === 'unauthenticated') {
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [state]);
+
+  const triggerShake = () => {
+    setShake(true);
+    setTimeout(() => setShake(false), 500);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!password.trim() || loading) return;
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const res = await fetch('/api/auth/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ password }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setState('authenticated');
+      } else {
+        setError(data.error ?? 'Invalid password.');
+        setPassword('');
+        triggerShake();
+        inputRef.current?.focus();
+      }
+    } catch {
+      setError('Connection error. Is the auth server running?');
+      triggerShake();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (state === 'checking') {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center" style={{ background: '#09090b' }}>
+        <div style={{ color: '#52525b', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', letterSpacing: '0.3em' }}>
+          VERIFYING SESSION...
+        </div>
+      </div>
+    );
+  }
+
+  if (state === 'authenticated') {
+    return <>{children}</>;
+  }
+
+  // Unauthenticated — show OTP gate
+  return (
+    <div
+      className="min-h-screen w-full flex items-center justify-center"
+      style={{ background: '#09090b' }}
+    >
+      {/* Subtle grid background */}
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.03) 1px, transparent 0)',
+          backgroundSize: '32px 32px',
+          pointerEvents: 'none',
+        }}
+      />
+
+      <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '360px', padding: '0 16px' }}>
+        {/* Lock icon */}
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '48px',
+            height: '48px',
+            borderRadius: '12px',
+            border: '1px solid rgba(255,255,255,0.08)',
+            background: 'rgba(255,255,255,0.03)',
+            marginBottom: '20px',
+          }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
+          <div style={{
+            fontFamily: 'JetBrains Mono, monospace',
+            fontSize: '10px',
+            letterSpacing: '0.4em',
+            color: 'rgba(255,255,255,0.25)',
+            textTransform: 'uppercase',
+          }}>
+            PRIVATE
+          </div>
+        </div>
+
+        {/* Card */}
+        <div
+          style={{
+            background: '#111113',
+            border: '1px solid rgba(255,255,255,0.07)',
+            borderRadius: '16px',
+            padding: '28px 24px',
+            animation: shake ? 'shake 0.5s cubic-bezier(0.36,0.07,0.19,0.97)' : 'none',
+          }}
+        >
+          <h1 style={{
+            fontFamily: 'Inter, sans-serif',
+            fontSize: '15px',
+            fontWeight: 500,
+            color: 'rgba(255,255,255,0.85)',
+            marginBottom: '6px',
+          }}>
+            Enter access password
+          </h1>
+          <p style={{
+            fontFamily: 'Inter, sans-serif',
+            fontSize: '12px',
+            color: 'rgba(255,255,255,0.3)',
+            marginBottom: '20px',
+            lineHeight: '1.5',
+          }}>
+            This site is protected. Use the one-time password generated by the server.
+          </p>
+
+          <form onSubmit={handleSubmit} autoComplete="off">
+            <input
+              ref={inputRef}
+              type="password"
+              value={password}
+              onChange={e => { setPassword(e.target.value); setError(''); }}
+              placeholder="one-time password"
+              autoComplete="off"
+              spellCheck={false}
+              disabled={loading}
+              style={{
+                width: '100%',
+                boxSizing: 'border-box',
+                background: 'rgba(255,255,255,0.04)',
+                border: error ? '1px solid rgba(239,68,68,0.5)' : '1px solid rgba(255,255,255,0.09)',
+                borderRadius: '8px',
+                padding: '10px 12px',
+                color: 'rgba(255,255,255,0.85)',
+                fontFamily: 'JetBrains Mono, monospace',
+                fontSize: '13px',
+                letterSpacing: '0.1em',
+                outline: 'none',
+                transition: 'border-color 0.2s',
+                marginBottom: error ? '8px' : '16px',
+              }}
+              onFocus={e => {
+                if (!error) e.target.style.borderColor = 'rgba(255,255,255,0.2)';
+              }}
+              onBlur={e => {
+                if (!error) e.target.style.borderColor = 'rgba(255,255,255,0.09)';
+              }}
+            />
+
+            {error && (
+              <p style={{
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '11px',
+                color: 'rgba(239,68,68,0.9)',
+                marginBottom: '14px',
+                lineHeight: '1.4',
+              }}>
+                {error}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading || !password.trim()}
+              style={{
+                width: '100%',
+                padding: '10px',
+                background: loading || !password.trim() ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.1)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '8px',
+                color: loading || !password.trim() ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.8)',
+                fontFamily: 'JetBrains Mono, monospace',
+                fontSize: '11px',
+                letterSpacing: '0.2em',
+                cursor: loading || !password.trim() ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s',
+              }}
+            >
+              {loading ? 'VERIFYING...' : 'ENTER'}
+            </button>
+          </form>
+        </div>
+
+        <p style={{
+          textAlign: 'center',
+          marginTop: '20px',
+          fontFamily: 'JetBrains Mono, monospace',
+          fontSize: '9px',
+          letterSpacing: '0.3em',
+          color: 'rgba(255,255,255,0.1)',
+          textTransform: 'uppercase',
+        }}>
+          Max 5 attempts · Resets after 15 min
+        </p>
+      </div>
+
+      <style>{`
+        @keyframes shake {
+          10%, 90% { transform: translateX(-2px); }
+          20%, 80% { transform: translateX(4px); }
+          30%, 50%, 70% { transform: translateX(-6px); }
+          40%, 60% { transform: translateX(6px); }
+        }
+      `}</style>
+    </div>
+  );
+};
+
+export default AuthGate;
