@@ -1,7 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import RainBackground from './components/RainBackground';
 import Window from './components/Window';
+import LockScreen from './components/LockScreen';
 
 type View = 'home' | 'age' | 'location' | 'usernames';
 type Lang = 'en' | 'de';
@@ -60,6 +60,7 @@ const TRANSLATIONS = {
 };
 
 const App: React.FC = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [theme, setTheme] = useState<'gray' | 'warm'>('warm');
   const [language, setLanguage] = useState<Lang>('en');
   const [currentView, setCurrentView] = useState<View>('home');
@@ -68,9 +69,9 @@ const App: React.FC = () => {
   useEffect(() => {
     const body = document.getElementById('body-bg');
     if (body) {
-      body.style.backgroundColor = theme === 'gray' ? '#09090b' : '#f5f5f0';
+      body.style.backgroundColor = !isAuthenticated ? '#ffffff' : (theme === 'gray' ? '#09090b' : '#f5f5f0');
     }
-  }, [theme]);
+  }, [theme, isAuthenticated]);
 
   const toggleTheme = () => setTheme(prev => prev === 'gray' ? 'warm' : 'gray');
   const handleLanguageToggle = (lang: Lang) => {
@@ -91,6 +92,10 @@ const App: React.FC = () => {
 
   const isGray = theme === 'gray';
   const t = TRANSLATIONS[language];
+
+  if (!isAuthenticated) {
+    return <LockScreen onUnlock={() => setIsAuthenticated(true)} />;
+  }
 
   const renderContent = () => {
     switch (currentView) {
@@ -202,7 +207,6 @@ const App: React.FC = () => {
         </div>
       </Window>
 
-      {/* Footer Info */}
       <div className={`absolute bottom-6 left-1/2 -translate-x-1/2 text-[9px] mono uppercase tracking-[0.5em] hidden md:block opacity-30 transition-colors duration-700 ${isGray ? 'text-zinc-500' : 'text-stone-400'}`}>
         Adnan • @adnan_ok • 2024
       </div>
