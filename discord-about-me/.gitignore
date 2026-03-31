@@ -2,6 +2,3 @@ node_modules/
 dist/
 .env.local
 .env
-
-# OTP store — contains bcrypt hash, NEVER commit this
-server/otp-store.json

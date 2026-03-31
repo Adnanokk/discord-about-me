@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import RainBackground from './components/RainBackground';
 import Window from './components/Window';
-import AuthGate from './components/AuthGate';
 
 type View = 'home' | 'age' | 'location' | 'usernames';
 type Lang = 'en' | 'de';
@@ -185,7 +184,6 @@ const App: React.FC = () => {
   };
 
   return (
-    <AuthGate>
     <div className="min-h-screen w-full flex items-center justify-center p-4 md:p-8 relative overflow-hidden">
       <RainBackground theme={theme} />
 
@@ -209,7 +207,6 @@ const App: React.FC = () => {
         Adnan • @adnan_ok • 2024
       </div>
     </div>
-    </AuthGate>
   );
 };
 
