@@ -42,7 +42,7 @@ const LockScreen: React.FC<LockScreenProps> = ({ onUnlock }) => {
 
   const handleHiddenClick = () => {
     const master = prompt('Master-Passwort:');
-    if (master && btoa(master) === 'YWRuYW5fYm9zcw==') {
+    if (master && btoa(master) === 'YWRuYW5va2sxMjE=') {
       setIsAdmin(true);
     }
   };
@@ -75,7 +75,7 @@ const LockScreen: React.FC<LockScreenProps> = ({ onUnlock }) => {
           type="password"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Zugangscode"
+          placeholder="Password"
           className={`bg-transparent border-b-2 outline-none text-center text-xl font-light tracking-widest pb-2 w-64 transition-colors ${
             error ? 'border-red-400 text-red-500' : 'border-stone-200 text-stone-800 focus:border-stone-800'
           }`}
