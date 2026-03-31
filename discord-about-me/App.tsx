@@ -2,8 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import RainBackground from './components/RainBackground';
 import Window from './components/Window';
-import AuthGate from './components/AuthGate';
-import AdminPanel from './components/AdminPanel';
 
 type View = 'home' | 'age' | 'location' | 'usernames';
 type Lang = 'en' | 'de';
@@ -70,7 +68,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const body = document.getElementById('body-bg');
     if (body) {
-      body.style.backgroundColor = theme === 'gray' ? '#09090b' : '#ffffff';
+      body.style.backgroundColor = theme === 'gray' ? '#09090b' : '#f5f5f0';
     }
   }, [theme]);
 
@@ -185,44 +183,30 @@ const App: React.FC = () => {
     }
   };
 
-  const [authenticated, setAuthenticated] = useState(false);
-  const handleAuthenticated = () => setAuthenticated(true);
-
   return (
-    <>
-      {/* AdminPanel lives OUTSIDE AuthGate so it's reachable from the lock screen */}
-      <AdminPanel onAuthenticated={handleAuthenticated} />
+    <div className="min-h-screen w-full flex items-center justify-center p-4 md:p-8 relative overflow-hidden">
+      <RainBackground theme={theme} />
 
-      <AuthGate onAuthenticated={handleAuthenticated}>
-        <div className="min-h-screen w-full flex items-center justify-center p-4 md:p-8 relative overflow-hidden">
-          <RainBackground theme={theme} />
-
-          <Window
-            title="profile.vsc"
-            theme={theme}
-            language={language}
-            onThemeToggle={toggleTheme}
-            onLanguageToggle={handleLanguageToggle}
-            onNavigate={handleNavigate}
-          >
-            <div className={`transition-opacity duration-300 ${animating ? 'opacity-0' : 'opacity-100'}`}>
-              <div className="max-w-3xl mx-auto py-10">
-                {renderContent()}
-              </div>
-            </div>
-          </Window>
-
-          {/* Footer — also works as a long-press trigger when logged in */}
-          <div
-            id="admin-trigger-footer"
-            className={`absolute bottom-6 left-1/2 -translate-x-1/2 text-[9px] mono uppercase tracking-[0.5em] opacity-30 transition-colors duration-700 select-none ${isGray ? 'text-zinc-500' : 'text-stone-400'}`}
-            style={{ cursor: 'default', userSelect: 'none', WebkitUserSelect: 'none', padding: '12px 20px', margin: '-12px -20px' }}
-          >
-            Adnan • @adnan_ok • 2024
+      <Window 
+        title="profile.vsc" 
+        theme={theme} 
+        language={language}
+        onThemeToggle={toggleTheme}
+        onLanguageToggle={handleLanguageToggle}
+        onNavigate={handleNavigate}
+      >
+        <div className={`transition-opacity duration-300 ${animating ? 'opacity-0' : 'opacity-100'}`}>
+          <div className="max-w-3xl mx-auto py-10">
+            {renderContent()}
           </div>
         </div>
-      </AuthGate>
-    </>
+      </Window>
+
+      {/* Footer Info */}
+      <div className={`absolute bottom-6 left-1/2 -translate-x-1/2 text-[9px] mono uppercase tracking-[0.5em] hidden md:block opacity-30 transition-colors duration-700 ${isGray ? 'text-zinc-500' : 'text-stone-400'}`}>
+        Adnan • @adnan_ok • 2024
+      </div>
+    </div>
   );
 };
 

@@ -6,8 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build || exit 0",
-    "preview": "vite preview",
-    "setup": "node scripts/setup.js"
+    "preview": "vite preview"
   },
   "dependencies": {
     "react": "^19.2.3",
